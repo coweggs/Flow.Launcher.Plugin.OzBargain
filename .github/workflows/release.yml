@@ -26,11 +26,11 @@ jobs:
 
       - name: Zip plugin
         run: |
-          Compress-Archive -Path publish\* -DestinationPath FlowPlugin.zip
+          Compress-Archive -Path publish\* -DestinationPath Flow.Launcher.Plugin.OzBargain.zip
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: FlowPlugin.zip        
+          files: Flow.Launcher.Plugin.OzBargain.zip        
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
