@@ -87,34 +87,46 @@ namespace Flow.Launcher.Plugin.OzBargain
                 {
                     new()
                     {
-                        Title = "New Deals", IcoPath = "icon.png",
-                        Action = _ =>
+                        Title = "New Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                        Action = actionContext =>
                         {
-                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals");
+                            bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                            if (ctrPressed)
+                                _context.API.OpenUrl("https://www.ozbargain.com.au/deals");
+                            else
+                                _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals");
                             return false;
                         }
                     },
                     new()
                     {
-                        Title = "Freebies", IcoPath = "icon.png",
-                        Action = _ =>
+                        Title = "Freebies", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                        Action = actionContext =>
                         {
-                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/freebies");
+                            bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                            if (ctrPressed)
+                                _context.API.OpenUrl("https://www.ozbargain.com.au/freebies");
+                            else
+                                _context.API.ChangeQuery("oz https://www.ozbargain.com.au/freebies");
                             return false;
                         }
                     },
                     new()
                     {
-                        Title = "Popular Deals", IcoPath = "icon.png",
-                        Action = _ =>
+                        Title = "Popular Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                        Action = actionContext =>
                         {
-                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals/popular");
+                            bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                            if (ctrPressed)
+                                _context.API.OpenUrl("https://www.ozbargain.com.au/deals/popular");
+                            else
+                                _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals/popular");
                             return false;
                         }
                     },
                     new()
                     {
-                        Title = "Refresh", IcoPath = "icon.png",
+                        Title = "Refresh", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
                         Action = _ =>
                         {
                             CachedFetches = new Dictionary<string, XDocument>();
