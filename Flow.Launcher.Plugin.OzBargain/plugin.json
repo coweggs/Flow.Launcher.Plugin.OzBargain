@@ -2,11 +2,11 @@
     "ID": "6DEA90BAF506475CBE270DBC1ADC482B",
     "ActionKeyword": "oz",
     "Name": "OzBargain",
-    "Description": "a new plugin for Flow",
+    "Description": "Browse OzBargain from FlowLauncher!",
     "Author": "coweggs",
     "Version": "1.0.0",
     "Language": "csharp",
     "Website": "https://github.com/coweggs/Flow.Launcher.Plugin.OzBargain",
-    "IcoPath": "icon.png",
+    "IcoPath": "logo-icon-256.png",
     "ExecuteFileName": "Flow.Launcher.Plugin.OzBargain.dll"
 }
