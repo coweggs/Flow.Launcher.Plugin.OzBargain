@@ -2,8 +2,6 @@ using System;
 using System.Xml.Linq;
 using System.Collections.Generic;
 using System.Linq;
-using System.Diagnostics;
-using System.Windows;
 
 namespace Flow.Launcher.Plugin.OzBargain
 {
@@ -33,6 +31,7 @@ namespace Flow.Launcher.Plugin.OzBargain
             if (query.SearchTerms.Length > 0)
             {
                 results = new List<Result>();
+
                 string RSS_url = query.SearchTerms[0] + "/feed";
                 
                 try
@@ -61,7 +60,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                                 Action = _ =>
                                 {
                                     string url = item.Element("link").Value;
-                                    Process.Start(url);
+                                    _context.API.OpenUrl(url);
                                     return true; // close flow after action
                                 }
                             }
@@ -76,7 +75,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                         Title = title,
                         Action = _ =>
                         {
-                            System.Windows.Clipboard.SetData(DataFormats.Text, e.ToString());
+                            _context.API.CopyToClipboard(e.ToString());
                             return true;
                         }
                     }};
@@ -86,15 +85,43 @@ namespace Flow.Launcher.Plugin.OzBargain
             {
                 results = new List<Result>
                 {
-                    new() { Title = "New Deals", IcoPath = "icon.png",
-                            SubTitle = "Press Ctr+Tab (or autocomplete hotkey)",
-                            AutoCompleteText = "oz https://www.ozbargain.com.au/deals" },
-                    new() { Title = "Freebies", IcoPath = "icon.png",
-                            SubTitle = "Press Ctr+Tab (or autocomplete hotkey)",
-                            AutoCompleteText = "oz https://www.ozbargain.com.au/freebies" },
-                    new() { Title = "Popular Deals", IcoPath = "icon.png",
-                            SubTitle = "Press Ctr+Tab (or autocomplete hotkey)",
-                            AutoCompleteText = "oz https://www.ozbargain.com.au/deals/popular" },
+                    new()
+                    {
+                        Title = "New Deals", IcoPath = "icon.png",
+                        Action = _ =>
+                        {
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals");
+                            return false;
+                        }
+                    },
+                    new()
+                    {
+                        Title = "Freebies", IcoPath = "icon.png",
+                        Action = _ =>
+                        {
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/freebies");
+                            return false;
+                        }
+                    },
+                    new()
+                    {
+                        Title = "Popular Deals", IcoPath = "icon.png",
+                        Action = _ =>
+                        {
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals/popular");
+                            return false;
+                        }
+                    },
+                    new()
+                    {
+                        Title = "Refresh",
+                        Action = _ =>
+                        {
+                            CachedFetches = new Dictionary<string, XDocument>();
+                            _context.API.ShowMsg("Refreshed Plugin Cache!");
+                            return false;
+                        }
+                    }
                 };
             }
 
@@ -105,17 +132,18 @@ namespace Flow.Launcher.Plugin.OzBargain
         {
             title = item.Element("title").Value;
 
-            expiry = "Unknown";
+            expiry = "Expiry Date Unknown";
             string rawExpiry = item.Elements()
                                     .FirstOrDefault(i => i.Attribute("expiry") != null)
                                     ?.Attribute("expiry")
                                     ?.Value;
-            if (!string.IsNullOrEmpty(rawExpiry) && DateTimeOffset.TryParse(rawExpiry, out var dto))
+            if (!string.IsNullOrEmpty(rawExpiry) && DateTimeOffset.TryParse(rawExpiry, out var ExpiryDateTimeOffset))
             {
                 // parse to human readable format
-                expiry = dto.LocalDateTime.ToString("dddd, dd MMMM yyyy HH:mm:ss");
+                TimeSpan timeUntil = ExpiryDateTimeOffset - DateTimeOffset.UtcNow;
+                double totalHours = timeUntil.TotalHours;
+                expiry = $"Expires in {Math.Floor(totalHours / 24.0)} days and {Math.Floor((totalHours % 24.0) * 10) / 10} hours";
             }
-            expiry = "Expires: " + expiry;
             if (item.Elements().FirstOrDefault(e => e.Name.LocalName == "title-msg")?.Value.ToLower() == "expired")
             {
                 expiry = "EXPIRED";
