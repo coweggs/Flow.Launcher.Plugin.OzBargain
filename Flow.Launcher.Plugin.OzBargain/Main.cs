@@ -114,7 +114,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                     },
                     new()
                     {
-                        Title = "Refresh",
+                        Title = "Refresh", IcoPath = "icon.png",
                         Action = _ =>
                         {
                             CachedFetches = new Dictionary<string, XDocument>();
