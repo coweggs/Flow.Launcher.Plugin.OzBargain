@@ -61,7 +61,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                 currentlySearching = "";
                 results.Add(new()
                 {
-                    Title = $"Search \"{query.Search.Substring(query.FirstSearch.Length).Trim()}\"", IcoPath = "icon.png",
+                    Title = $"Search \"{query.Search.Substring(query.FirstSearch.Length).Trim()}\"", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     Action = _ =>
                     {
                         _context.API.ReQuery(false);
@@ -134,7 +134,7 @@ namespace Flow.Launcher.Plugin.OzBargain
             {
                 new()
                 {
-                    Title = "Search", SubTitle = "Ctr Click to Search Not Expired", IcoPath = "icon.png",
+                    Title = "Search", SubTitle = "Ctr Click to Search Not Expired", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     AutoCompleteText = "oz search ",
                     Action = actionContext =>
                     {
@@ -148,7 +148,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                 },
                 new()
                 {
-                    Title = "Feeds", IcoPath = "icon.png",
+                    Title = "Feeds", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     AutoCompleteText = "oz feed",
                     Action = _ =>
                     {
@@ -158,7 +158,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                 },
                 new()
                 {
-                    Title = "Refresh Feed", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
+                    Title = "Refresh Feed", SubTitle = "Too many could lead to rate limit!", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     Action = _ =>
                     {
                         CachedFetches = new Dictionary<string, XDocument>();
@@ -175,7 +175,7 @@ namespace Flow.Launcher.Plugin.OzBargain
             {
                 new()
                 {
-                    Title = "Front Page", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    Title = "Front Page", SubTitle = "Ctr Click to Open URL", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     AutoCompleteText = "oz https://www.ozbargain.com.au",
                     Action = actionContext =>
                     {
@@ -189,7 +189,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                 },
                 new()
                 {
-                    Title = "New Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    Title = "New Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     AutoCompleteText = "oz https://www.ozbargain.com.au/deals",
                     Action = actionContext =>
                     {
@@ -203,7 +203,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                 },
                 new()
                 {
-                    Title = "Freebies", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    Title = "Freebies", SubTitle = "Ctr Click to Open URL", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     AutoCompleteText = "oz https://www.ozbargain.com.au/freebies",
                     Action = actionContext =>
                     {
@@ -217,7 +217,7 @@ namespace Flow.Launcher.Plugin.OzBargain
                 },
                 new()
                 {
-                    Title = "Popular Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    Title = "Popular Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
                     AutoCompleteText = "oz https://www.ozbargain.com.au/deals/popular",
                     Action = actionContext =>
                     {
