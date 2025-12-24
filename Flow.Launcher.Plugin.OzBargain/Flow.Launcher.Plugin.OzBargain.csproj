@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <PackageReference Include="Flow.Launcher.Plugin" Version="4.4.0" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
   </ItemGroup>
 
 </Project>

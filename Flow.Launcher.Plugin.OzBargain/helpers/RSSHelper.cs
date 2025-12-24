@@ -5,14 +5,8 @@ using System.Linq;
 
 namespace Flow.Launcher.Plugin.OzBargain.Services;
 
-/// <summary>
-/// Helper class to parse RSS.
-/// </summary>
 public class RSSHelper
 {
-    /// <summary>
-    /// Parse RSS XML into List of Results.
-    /// </summary>
     public static List<Result> ParseRSS(XDocument doc, PluginInitContext _context)
     {
         List<Result> results = new List<Result>();

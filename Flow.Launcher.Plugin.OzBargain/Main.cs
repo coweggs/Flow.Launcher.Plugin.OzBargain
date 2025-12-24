@@ -1,42 +1,53 @@
 using System;
 using System.Xml.Linq;
 using System.Collections.Generic;
+using HtmlAgilityPack;
 using Flow.Launcher.Plugin.OzBargain.Services;
 
 namespace Flow.Launcher.Plugin.OzBargain
 {
-    /// <summary>
-    /// OzBargain Plugin.
-    /// </summary>
     public class OzBargain : IPlugin
     {
         private PluginInitContext _context;
 
         private static Dictionary<string, XDocument> CachedFetches = new Dictionary<string, XDocument>();
+        private static string currentlySearching = "";
 
-        /// <summary>
-        /// Initializes the plugin.
-        /// </summary>
         public void Init(PluginInitContext context)
         {
             _context = context;
         }
 
-        /// <summary>
-        /// On User Query Event.
-        /// </summary>
         public List<Result> Query(Query query)
         {
             List<Result> results = new List<Result>();;
             
             if (query.SearchTerms.Length > 0)
             {
-                if (query.SearchTerms[0].ToLower() == "search")
+                if (query.FirstSearch.ToLower() == "search")
                 {
-                    
+                    if (currentlySearching == query.Search.Substring(6).Trim())
+                    {
+                        results.AddRange(DoSearch(query));
+                    }
+                    else
+                    {
+                        currentlySearching = "";
+                        results.Add(new()
+                        {
+                            Title = $"Search \"{query.Search.Substring(6).Trim()}\"", IcoPath = "icon.png",
+                            Action = _ =>
+                            {
+                                _context.API.ReQuery(false);
+                                currentlySearching = query.Search.Substring(6).Trim();
+                                return false;
+                            }
+                        });
+                    }
                 }
                 else // Assume first search term is a ozb url.
                 {
+                    currentlySearching = "";
                     results.AddRange(FetchFeed(query));
                 }
             }
@@ -87,10 +98,35 @@ namespace Flow.Launcher.Plugin.OzBargain
             return results;
         }
 
+        private List<Result> DoSearch(Query query)
+        {
+            List<Result> results = new List<Result>();
+
+            // everything after keyword "search"
+            string searchQuery = query.Search.Substring(6).Trim();
+            if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                HtmlDocument doc = SearchHelper.FetchDoc(searchQuery);
+                results.AddRange(SearchHelper.ParseDoc(doc, _context));
+            }
+
+            return results;
+        }
+
         private List<Result> BuildBaseResults()
         {
             return new List<Result>
             {
+                new()
+                {
+                    Title = "Search", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
+                    AutoCompleteText = "oz search ",
+                    Action = _ =>
+                    {
+                        _context.API.ChangeQuery("oz search ");
+                        return false;
+                    }
+                },
                 new()
                 {
                     Title = "New Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
