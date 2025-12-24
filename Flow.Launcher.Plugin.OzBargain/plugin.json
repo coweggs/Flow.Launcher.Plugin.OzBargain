@@ -7,6 +7,6 @@
     "Version": "1.0.0",
     "Language": "csharp",
     "Website": "https://github.com/coweggs/Flow.Launcher.Plugin.OzBargain",
-    "IcoPath": "logo-icon-256.png",
+    "IcoPath": "https://www.ozbargain.com.au/themes/ozbargain/logo-icon-256.png",
     "ExecuteFileName": "Flow.Launcher.Plugin.OzBargain.dll"
 }
