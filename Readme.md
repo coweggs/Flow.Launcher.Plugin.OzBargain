@@ -6,12 +6,11 @@ A plugin for the [Flow launcher](https://github.com/Flow-Launcher/Flow.Launcher)
     <img width="1000" height="505" alt="image" src="https://github.com/user-attachments/assets/b5bbef3a-2f90-40b3-abe4-5a6d58a96617" />
 </div>
 
+### Installation
+    pm install https://github.com/coweggs/Flow.Launcher.Plugin.OzBargain/releases/tag/v1.0.0.zip
 
 ### Usage
-Default keyword is `oz`.
-
-`oz <url>`: Atemps to show the RSS feed for the designated URL.
-
+    oz <url>
 Once a feed has been fetched, interact with any item to open it in your default browser. Title, and Expiry Date, as well as an Image are shown in Flow Launcher.
 
 If no `<url>` is specified:
