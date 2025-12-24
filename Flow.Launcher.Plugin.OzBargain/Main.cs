@@ -22,33 +22,23 @@ namespace Flow.Launcher.Plugin.OzBargain
         {
             List<Result> results = new List<Result>();;
             
-            if (query.SearchTerms.Length > 0)
+            if (query.FirstSearch != "")
             {
-                if (query.FirstSearch.ToLower() == "search")
+                switch (query.FirstSearch.Trim().ToLower())
                 {
-                    if (currentlySearching == query.Search.Substring(6).Trim())
-                    {
-                        results.AddRange(DoSearch(query));
-                    }
-                    else
-                    {
+                    case "search":
+                    case "searchnotexpired":
+                        results.AddRange(HandleSearchQuery(query));
+                        break;
+                    case "feed":
                         currentlySearching = "";
-                        results.Add(new()
-                        {
-                            Title = $"Search \"{query.Search.Substring(6).Trim()}\"", IcoPath = "icon.png",
-                            Action = _ =>
-                            {
-                                _context.API.ReQuery(false);
-                                currentlySearching = query.Search.Substring(6).Trim();
-                                return false;
-                            }
-                        });
-                    }
-                }
-                else // Assume first search term is a ozb url.
-                {
-                    currentlySearching = "";
-                    results.AddRange(FetchFeed(query));
+                        results.AddRange(BuildFeedResults());
+                        break;
+                    default:
+                        currentlySearching = "";
+                        if (query.Search.ToLower().Contains("ozbargain.com"))
+                            results.AddRange(FetchFeed(query));
+                        break;
                 }
             }
             else
@@ -56,6 +46,30 @@ namespace Flow.Launcher.Plugin.OzBargain
                 results.AddRange(BuildBaseResults());
             }
 
+            return results;
+        }
+
+        private List<Result> HandleSearchQuery(Query query)
+        {
+            List<Result> results = new List<Result>();
+            if (currentlySearching == query.Search.Substring(query.FirstSearch.Length).Trim())
+            {
+                results.AddRange(DoSearch(query));
+            }
+            else
+            {
+                currentlySearching = "";
+                results.Add(new()
+                {
+                    Title = $"Search \"{query.Search.Substring(query.FirstSearch.Length).Trim()}\"", IcoPath = "icon.png",
+                    Action = _ =>
+                    {
+                        _context.API.ReQuery(false);
+                        currentlySearching = query.Search.Substring(query.FirstSearch.Length).Trim();
+                        return false;
+                    }
+                });
+            }
             return results;
         }
 
@@ -103,10 +117,11 @@ namespace Flow.Launcher.Plugin.OzBargain
             List<Result> results = new List<Result>();
 
             // everything after keyword "search"
-            string searchQuery = query.Search.Substring(6).Trim();
+            bool showExpired = !query.FirstSearch.ToLower().Contains("notexpired");
+            string searchQuery = query.Search.Substring(query.FirstSearch.Length).Trim();
             if (!string.IsNullOrWhiteSpace(searchQuery))
             {
-                HtmlDocument doc = SearchHelper.FetchDoc(searchQuery);
+                HtmlDocument doc = SearchHelper.FetchDoc(searchQuery, showExpired);
                 results.AddRange(SearchHelper.ParseDoc(doc, _context));
             }
 
@@ -119,11 +134,56 @@ namespace Flow.Launcher.Plugin.OzBargain
             {
                 new()
                 {
-                    Title = "Search", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
+                    Title = "Search", SubTitle = "Ctr Click to Search Not Expired", IcoPath = "icon.png",
                     AutoCompleteText = "oz search ",
+                    Action = actionContext =>
+                    {
+                        bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                        if (ctrPressed)
+                            _context.API.ChangeQuery("oz searchnotexpired ");
+                        else
+                            _context.API.ChangeQuery("oz search ");
+                        return false;
+                    }
+                },
+                new()
+                {
+                    Title = "Feeds", IcoPath = "icon.png",
+                    AutoCompleteText = "oz feed",
                     Action = _ =>
                     {
-                        _context.API.ChangeQuery("oz search ");
+                        _context.API.ChangeQuery("oz feed");
+                        return false;
+                    }
+                },
+                new()
+                {
+                    Title = "Refresh Feed", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
+                    Action = _ =>
+                    {
+                        CachedFetches = new Dictionary<string, XDocument>();
+                        _context.API.ShowMsg("Refreshed Plugin Cache!");
+                        return false;
+                    }
+                }
+            };
+        }
+    
+        private List<Result> BuildFeedResults()
+        {
+            return new List<Result>()
+            {
+                new()
+                {
+                    Title = "Front Page", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    AutoCompleteText = "oz https://www.ozbargain.com.au",
+                    Action = actionContext =>
+                    {
+                        bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                        if (ctrPressed)
+                            _context.API.OpenUrl("https://www.ozbargain.com.au");
+                        else
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au");
                         return false;
                     }
                 },
@@ -166,16 +226,6 @@ namespace Flow.Launcher.Plugin.OzBargain
                             _context.API.OpenUrl("https://www.ozbargain.com.au/deals/popular");
                         else
                             _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals/popular");
-                        return false;
-                    }
-                },
-                new()
-                {
-                    Title = "Refresh", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
-                    Action = _ =>
-                    {
-                        CachedFetches = new Dictionary<string, XDocument>();
-                        _context.API.ShowMsg("Refreshed Plugin Cache!");
                         return false;
                     }
                 }

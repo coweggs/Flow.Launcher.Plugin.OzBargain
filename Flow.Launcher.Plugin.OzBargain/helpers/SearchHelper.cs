@@ -12,16 +12,26 @@ public class SearchHelper
     public static List<Result> ParseDoc(HtmlDocument doc, PluginInitContext _context)
     {
         List<Result> results = new List<Result>();
-        HtmlNode SearchResults = doc.DocumentNode.SelectSingleNode("//body/main/div/div/dl");
+        HtmlNodeCollection haystack = doc.DocumentNode.SelectNodes("//body/main/div/div/dl");
+        HtmlNode SearchResults = haystack[0]; // the needle
+        foreach(HtmlNode n in haystack)
+        {
+            if (n.HasClass("search-results"))
+            {
+                SearchResults = n;
+                break;
+            }
+        }
+
         foreach(HtmlNode node in SearchResults.SelectNodes("dt"))
         {
-            string title = node.Element("a").GetDirectInnerText();
+            string title = node.Element("a").InnerText;
 			title = WebUtility.HtmlDecode(title);
             string expiry = "Expiry Date Unknown";
             if (node.Element("span") != null)
-                expiry = node.Element("span").InnerText.ToLower() == "expired" ? "EXPIRED" : "Not Expired";
-            string icoPath = node.Element("div").Element("a").Element("img").GetAttributeValue("src", "");
-            string link = "https://www.ozbargain.com" + node.Element("div").Element("a").GetAttributeValue("href", "");
+                expiry = node.Element("span").InnerText.ToLower() == "expired" ? "EXPIRED" : $"[{node.Element("span").InnerText}]";
+            string icoPath = node.Element("div")?.Element("a")?.Element("img")?.GetAttributeValue("src", "") ?? "";
+            string link = "https://www.ozbargain.com" + node.Element("div")?.Element("a")?.GetAttributeValue("href", "") ?? "";
             results.Add(new()
                 {
                     Title = title,
@@ -38,10 +48,10 @@ public class SearchHelper
         return results;
     }
 
-    public static HtmlDocument FetchDoc(string query)
+    public static HtmlDocument FetchDoc(string query, bool showExpired)
     {
         web = web ?? new HtmlWeb();
-        string encoded = Uri.EscapeDataString(query);
+        string encoded = Uri.EscapeDataString(query + (showExpired ? "" : " option:noexpired"));
         return web.Load("https://www.ozbargain.com.au/search/node/" + encoded);
     }
 }
