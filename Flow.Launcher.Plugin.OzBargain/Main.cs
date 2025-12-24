@@ -1,7 +1,7 @@
 using System;
 using System.Xml.Linq;
 using System.Collections.Generic;
-using System.Linq;
+using Flow.Launcher.Plugin.OzBargain.Services;
 
 namespace Flow.Launcher.Plugin.OzBargain
 {
@@ -27,143 +27,123 @@ namespace Flow.Launcher.Plugin.OzBargain
         /// </summary>
         public List<Result> Query(Query query)
         {
-            List<Result> results;
+            List<Result> results = new List<Result>();;
+            
             if (query.SearchTerms.Length > 0)
             {
-                results = new List<Result>();
-
-                string RSS_url = query.SearchTerms[0] + "/feed";
-                
-                try
+                if (query.SearchTerms[0].ToLower() == "search")
                 {
-                    // fetch data
-                    XDocument doc;
-                    if (CachedFetches.ContainsKey(RSS_url))
-                    {
-                        doc = CachedFetches[RSS_url];
-                    }
-                    else
-                    {
-                        doc = XDocument.Load(RSS_url);
-                        CachedFetches[RSS_url] = doc;
-                    }
-                    // parse data
-                    foreach (XElement item in doc.Descendants("item"))
-                    {
-                        ExtractVars(item, out string title, out string expiry, out string icoPath);
-                        results.Add(
-                            new()
-                            {
-                                Title = title,
-                                SubTitle = expiry,
-                                IcoPath = icoPath,
-                                Action = _ =>
-                                {
-                                    string url = item.Element("link").Value;
-                                    _context.API.OpenUrl(url);
-                                    return true; // close flow after action
-                                }
-                            }
-                        );
-                    }
+                    
                 }
-                catch (Exception e)
+                else // Assume first search term is a ozb url.
                 {
-                    string title = "Failed to fetch feed.";
-                    if (e.ToString().Contains("429")) title = "Rate limited, try again later.";
-                    results = new List<Result> { new() {
-                        Title = title,
-                        Action = _ =>
-                        {
-                            _context.API.CopyToClipboard(e.ToString());
-                            return true;
-                        }
-                    }};
+                    results.AddRange(FetchFeed(query));
                 }
             }
-            else    
+            else
             {
-                results = new List<Result>
-                {
-                    new()
-                    {
-                        Title = "New Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
-                        Action = actionContext =>
-                        {
-                            bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
-                            if (ctrPressed)
-                                _context.API.OpenUrl("https://www.ozbargain.com.au/deals");
-                            else
-                                _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals");
-                            return false;
-                        }
-                    },
-                    new()
-                    {
-                        Title = "Freebies", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
-                        Action = actionContext =>
-                        {
-                            bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
-                            if (ctrPressed)
-                                _context.API.OpenUrl("https://www.ozbargain.com.au/freebies");
-                            else
-                                _context.API.ChangeQuery("oz https://www.ozbargain.com.au/freebies");
-                            return false;
-                        }
-                    },
-                    new()
-                    {
-                        Title = "Popular Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
-                        Action = actionContext =>
-                        {
-                            bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
-                            if (ctrPressed)
-                                _context.API.OpenUrl("https://www.ozbargain.com.au/deals/popular");
-                            else
-                                _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals/popular");
-                            return false;
-                        }
-                    },
-                    new()
-                    {
-                        Title = "Refresh", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
-                        Action = _ =>
-                        {
-                            CachedFetches = new Dictionary<string, XDocument>();
-                            _context.API.ShowMsg("Refreshed Plugin Cache!");
-                            return false;
-                        }
-                    }
-                };
+                results.AddRange(BuildBaseResults());
             }
 
             return results;
         }
 
-        private static void ExtractVars(XElement item, out string title, out string expiry, out string icoPath)
+        private List<Result> FetchFeed(Query query)
         {
-            title = item.Element("title").Value;
-
-            expiry = "Expiry Date Unknown";
-            string rawExpiry = item.Elements()
-                                    .FirstOrDefault(i => i.Attribute("expiry") != null)
-                                    ?.Attribute("expiry")
-                                    ?.Value;
-            if (!string.IsNullOrEmpty(rawExpiry) && DateTimeOffset.TryParse(rawExpiry, out var ExpiryDateTimeOffset))
+            List<Result> results = new List<Result>();
+            
+            string RSS_url = query.SearchTerms[0] + "/feed";
+            
+            try
             {
-                // parse to human readable format
-                TimeSpan timeUntil = ExpiryDateTimeOffset - DateTimeOffset.UtcNow;
-                double totalHours = timeUntil.TotalHours;
-                expiry = $"Expires in {Math.Floor(totalHours / 24.0)} days and {Math.Floor((totalHours % 24.0) * 10) / 10} hours";
+                // fetch data
+                XDocument doc;
+                if (CachedFetches.ContainsKey(RSS_url))
+                {
+                    doc = CachedFetches[RSS_url];
+                }
+                else
+                {
+                    doc = XDocument.Load(RSS_url);
+                    CachedFetches[RSS_url] = doc;
+                }
+                // parse data
+                results.AddRange(RSSHelper.ParseRSS(doc, _context));;
             }
-            if (item.Elements().FirstOrDefault(e => e.Name.LocalName == "title-msg")?.Value.ToLower() == "expired")
+            catch (Exception e)
             {
-                expiry = "EXPIRED";
+                string title = "Failed to fetch feed.";
+                if (e.ToString().Contains("429")) title = "Rate limited, try again later.";
+                results = new List<Result> { new() {
+                    Title = title,
+                    Action = _ =>
+                    {
+                        _context.API.CopyToClipboard(e.ToString());
+                        return true;
+                    }
+                }};
             }
 
-            icoPath = item.Elements().FirstOrDefault(
-                        i => i.Attribute("image") != null
-                    )?.Attribute("image").Value ?? "";
+            return results;
+        }
+
+        private List<Result> BuildBaseResults()
+        {
+            return new List<Result>
+            {
+                new()
+                {
+                    Title = "New Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    AutoCompleteText = "oz https://www.ozbargain.com.au/deals",
+                    Action = actionContext =>
+                    {
+                        bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                        if (ctrPressed)
+                            _context.API.OpenUrl("https://www.ozbargain.com.au/deals");
+                        else
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals");
+                        return false;
+                    }
+                },
+                new()
+                {
+                    Title = "Freebies", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    AutoCompleteText = "oz https://www.ozbargain.com.au/freebies",
+                    Action = actionContext =>
+                    {
+                        bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                        if (ctrPressed)
+                            _context.API.OpenUrl("https://www.ozbargain.com.au/freebies");
+                        else
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/freebies");
+                        return false;
+                    }
+                },
+                new()
+                {
+                    Title = "Popular Deals", SubTitle = "Ctr Click to Open URL", IcoPath = "icon.png",
+                    AutoCompleteText = "oz https://www.ozbargain.com.au/deals/popular",
+                    Action = actionContext =>
+                    {
+                        bool ctrPressed = actionContext.SpecialKeyState.CtrlPressed;
+                        if (ctrPressed)
+                            _context.API.OpenUrl("https://www.ozbargain.com.au/deals/popular");
+                        else
+                            _context.API.ChangeQuery("oz https://www.ozbargain.com.au/deals/popular");
+                        return false;
+                    }
+                },
+                new()
+                {
+                    Title = "Refresh", SubTitle = "Too many could lead to rate limit!", IcoPath = "icon.png",
+                    Action = _ =>
+                    {
+                        CachedFetches = new Dictionary<string, XDocument>();
+                        _context.API.ShowMsg("Refreshed Plugin Cache!");
+                        return false;
+                    }
+                }
+            };
         }
     }
 }
