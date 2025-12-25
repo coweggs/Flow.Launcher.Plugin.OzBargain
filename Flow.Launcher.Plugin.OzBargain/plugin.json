@@ -4,7 +4,7 @@
     "Name": "OzBargain",
     "Description": "Browse OzBargain from FlowLauncher!",
     "Author": "coweggs",
-    "Version": "1.0.0",
+    "Version": "1.1.5",
     "Language": "csharp",
     "Website": "https://github.com/coweggs/Flow.Launcher.Plugin.OzBargain",
     "IcoPath": "icon.png",
