@@ -7,7 +7,7 @@ A plugin for the [Flow launcher](https://github.com/Flow-Launcher/Flow.Launcher)
 </div>
 
 ### Installation
-    pm install https://github.com/coweggs/Flow.Launcher.Plugin.OzBargain/releases/download/v1.1.5/Flow.Launcher.Plugin.OzBargain.zip
+    pm install OzBargain by coweggs
 
 ### Usage
 By default, three options are available:
